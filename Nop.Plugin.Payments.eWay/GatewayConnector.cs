@@ -1,7 +1,6 @@
 using System.IO;
 using System.Net;
 using System.Text;
-using Nop.Core.Configuration;
 
 namespace Nop.Plugin.Payments.eWay
 {
@@ -37,30 +36,29 @@ namespace Nop.Plugin.Payments.eWay
         /// <summary>
         /// Do the post to the gateway and retrieve the response
         /// </summary>
-        /// <param name="Request">Request</param>
+        /// <param name="request">Request</param>
         /// <returns>Response</returns>
-        public GatewayResponse ProcessRequest(GatewayRequest Request)
+        public GatewayResponse ProcessRequest(GatewayRequest request)
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(_uri);
-            request.Method = "POST";
-            request.Timeout = _timeout;
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.KeepAlive = false;
+            var curentRequest = (HttpWebRequest)WebRequest.Create(_uri);
+            curentRequest.Method = "POST";
+            curentRequest.Timeout = _timeout;
+            curentRequest.ContentType = "application/x-www-form-urlencoded";
+            curentRequest.KeepAlive = false;
 
-            byte[] requestBytes = Encoding.ASCII.GetBytes(Request.ToXml());
-            request.ContentLength = requestBytes.Length;
+            var requestBytes = Encoding.ASCII.GetBytes(request.ToXml());
+            curentRequest.ContentLength = requestBytes.Length;
 
             // Send the data out over the wire
-            Stream requestStream = request.GetRequestStream();
+            var requestStream = curentRequest.GetRequestStream();
             requestStream.Write(requestBytes, 0, requestBytes.Length);
             requestStream.Close();
 
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            var response = (HttpWebResponse)curentRequest.GetResponse();
 
-            using (StreamReader sr = new StreamReader(response.GetResponseStream(), System.Text.Encoding.ASCII))
+            using (var sr = new StreamReader(response.GetResponseStream(), Encoding.ASCII))
             {
-                string _serverXml = sr.ReadToEnd();
-                return new GatewayResponse(_serverXml);
+                return new GatewayResponse(sr.ReadToEnd());
             }
         }
     }

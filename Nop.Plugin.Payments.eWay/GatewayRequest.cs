@@ -1,5 +1,4 @@
 using Nop.Core;
-using Nop.Core.Configuration;
 
 namespace Nop.Plugin.Payments.eWay
 {
@@ -11,7 +10,7 @@ namespace Nop.Plugin.Payments.eWay
     public class GatewayRequest
     {
         private string _txCustomerID = "";
-        private int _txAmount = 0;
+        private int _txAmount;
         private string _txCardholderName = "";
         private string _txCardNumber = "";
         private string _txCardExpiryMonth = "01";
@@ -310,12 +309,12 @@ namespace Nop.Plugin.Payments.eWay
         /// <summary>
         /// Builds a simple XML node.
         /// </summary>
-        /// <param name="NodeName">The name of the node being created.</param>
-        /// <param name="NodeValue">The value of the node being created.</param>
+        /// <param name="nodeName">The name of the node being created.</param>
+        /// <param name="nodeValue">The value of the node being created.</param>
         /// <returns>An XML node as a string.</returns>
-        private string CreateNode(string NodeName, string NodeValue)
+        private string CreateNode(string nodeName, string nodeValue)
         {
-            return "<" + NodeName + ">" + NodeValue + "</" + NodeName + ">";
+            return "<" + nodeName + ">" + nodeValue + "</" + nodeName + ">";
         }
     }
 }

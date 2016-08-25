@@ -8,11 +8,8 @@ namespace Nop.Plugin.Payments.eWay.Models
         [NopResourceDisplayName("Plugins.Payments.eWay.UseSandbox")]
         public bool UseSandbox { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.eWay.TestCustomerId")]
-        public string TestCustomerId { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.eWay.LiveCustomerId")]
-        public string LiveCustomerId { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.eWay.CustomerId")]
+        public string CustomerId { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.eWay.AdditionalFee")]
         public decimal AdditionalFee { get; set; }

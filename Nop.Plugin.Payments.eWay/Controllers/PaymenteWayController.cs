@@ -29,11 +29,12 @@ namespace Nop.Plugin.Payments.eWay.Controllers
         [ChildActionOnly]
         public ActionResult Configure()
         {
-            var model = new ConfigurationModel();
-            model.UseSandbox = _eWayPaymentSettings.UseSandbox;
-            model.TestCustomerId = _eWayPaymentSettings.TestCustomerId;
-            model.LiveCustomerId = _eWayPaymentSettings.LiveCustomerId;
-            model.AdditionalFee = _eWayPaymentSettings.AdditionalFee;
+            var model = new ConfigurationModel
+            {
+                UseSandbox = _eWayPaymentSettings.UseSandbox,
+                CustomerId = _eWayPaymentSettings.CustomerId,
+                AdditionalFee = _eWayPaymentSettings.AdditionalFee
+            };
 
             return View("~/Plugins/Payments.eWay/Views/PaymenteWay/Configure.cshtml", model);
         }
@@ -48,8 +49,7 @@ namespace Nop.Plugin.Payments.eWay.Controllers
 
             //save settings
             _eWayPaymentSettings.UseSandbox = model.UseSandbox;
-            _eWayPaymentSettings.TestCustomerId = model.TestCustomerId;
-            _eWayPaymentSettings.LiveCustomerId = model.LiveCustomerId;
+            _eWayPaymentSettings.CustomerId = model.CustomerId;
             _eWayPaymentSettings.AdditionalFee = model.AdditionalFee;
             _settingService.SaveSetting(_eWayPaymentSettings);
 
@@ -62,52 +62,27 @@ namespace Nop.Plugin.Payments.eWay.Controllers
             var model = new PaymentInfoModel();
             
             //CC types
-            model.CreditCardTypes.Add(new SelectListItem()
-                {
-                    Text = "VISA",
-                    Value = "VISA",
-                });
-            model.CreditCardTypes.Add(new SelectListItem()
+            model.CreditCardTypes = new List<SelectListItem>
             {
-                Text = "MASTERCARD",
-                Value = "MASTER CARD",
-            });
-            model.CreditCardTypes.Add(new SelectListItem()
-            {
-                Text = "BANKCARD",
-                Value = "BANK CARD",
-            });
-            model.CreditCardTypes.Add(new SelectListItem()
-            {
-                Text = "AMEX",
-                Value = "AMEX",
-            });
-            model.CreditCardTypes.Add(new SelectListItem()
-            {
-                Text = "DINERS",
-                Value = "DINERS",
-            });
-            model.CreditCardTypes.Add(new SelectListItem()
-            {
-                Text = "JCB",
-                Value = "JCB",
-            });
-            
+                new SelectListItem { Text = "VISA", Value = "VISA" },
+                new SelectListItem { Text = "MASTERCARD", Value = "MASTER CARD" },
+                new SelectListItem { Text = "BANKCARD", Value = "BANK CARD" },
+                new SelectListItem { Text = "AMEX", Value = "AMEX" },
+                new SelectListItem { Text = "DINERS", Value = "DINERS" },
+                new SelectListItem { Text = "JCB", Value = "JCB" }
+            };
+
             //years
-            for (int i = 0; i < 15; i++)
+            for (var i = 0; i < 15; i++)
             {
-                string year = Convert.ToString(DateTime.Now.Year + i);
-                model.ExpireYears.Add(new SelectListItem()
-                {
-                    Text = year,
-                    Value = year,
-                });
+                var year = Convert.ToString(DateTime.Now.Year + i);
+                model.ExpireYears.Add(new SelectListItem { Text = year, Value = year });
             }
 
             //months
-            for (int i = 1; i <= 12; i++)
+            for (var i = 1; i <= 12; i++)
             {
-                string text = (i < 10) ? "0" + i.ToString() : i.ToString();
+                var text = string.Format("{0:00}", i);
                 model.ExpireMonths.Add(new SelectListItem()
                 {
                     Text = text,
@@ -116,17 +91,17 @@ namespace Nop.Plugin.Payments.eWay.Controllers
             }
 
             //set postback values
-            var form = this.Request.Form;
+            var form = Request.Form;
             model.CardholderName = form["CardholderName"];
             model.CardNumber = form["CardNumber"];
             model.CardCode = form["CardCode"];
-            var selectedCcType = model.CreditCardTypes.Where(x => x.Value.Equals(form["CreditCardType"], StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            var selectedCcType = model.CreditCardTypes.FirstOrDefault(x => x.Value.Equals(form["CreditCardType"], StringComparison.InvariantCultureIgnoreCase));
             if (selectedCcType != null)
                 selectedCcType.Selected = true;
-            var selectedMonth = model.ExpireMonths.Where(x => x.Value.Equals(form["ExpireMonth"], StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            var selectedMonth = model.ExpireMonths.FirstOrDefault(x => x.Value.Equals(form["ExpireMonth"], StringComparison.InvariantCultureIgnoreCase));
             if (selectedMonth != null)
                 selectedMonth.Selected = true;
-            var selectedYear = model.ExpireYears.Where(x => x.Value.Equals(form["ExpireYear"], StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            var selectedYear = model.ExpireYears.FirstOrDefault(x => x.Value.Equals(form["ExpireYear"], StringComparison.InvariantCultureIgnoreCase));
             if (selectedYear != null)
                 selectedYear.Selected = true;
 
@@ -147,22 +122,24 @@ namespace Nop.Plugin.Payments.eWay.Controllers
                 CardCode = form["CardCode"],
             };
             var validationResult = validator.Validate(model);
-            if (!validationResult.IsValid)
-                foreach (var error in validationResult.Errors)
-                    warnings.Add(error.ErrorMessage);
+            if (validationResult.IsValid) return warnings;
+
+            warnings.AddRange(validationResult.Errors.Select(error => error.ErrorMessage));
             return warnings;
         }
 
         [NonAction]
         public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
         {
-            var paymentInfo = new ProcessPaymentRequest();
-            paymentInfo.CreditCardType = form["CreditCardType"];
-            paymentInfo.CreditCardName = form["CardholderName"];
-            paymentInfo.CreditCardNumber = form["CardNumber"];
-            paymentInfo.CreditCardExpireMonth = int.Parse(form["ExpireMonth"]);
-            paymentInfo.CreditCardExpireYear = int.Parse(form["ExpireYear"]);
-            paymentInfo.CreditCardCvv2 = form["CardCode"];
+            var paymentInfo = new ProcessPaymentRequest
+            {
+                CreditCardType = form["CreditCardType"],
+                CreditCardName = form["CardholderName"],
+                CreditCardNumber = form["CardNumber"],
+                CreditCardExpireMonth = int.Parse(form["ExpireMonth"]),
+                CreditCardExpireYear = int.Parse(form["ExpireYear"]),
+                CreditCardCvv2 = form["CardCode"]
+            };
             return paymentInfo;
         }
     }

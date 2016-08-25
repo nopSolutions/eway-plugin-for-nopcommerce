@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Web.Routing;
 using Nop.Core;
-using Nop.Core.Domain;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Plugins;
@@ -26,8 +25,8 @@ namespace Nop.Plugin.Payments.eWay
         private readonly ISettingService _settingService;
         private readonly IStoreContext _storeContext;
 
-        private string APPROVED_RESPONSE = "00";
-        private string HONOUR_RESPONSE = "08";
+        private const string APPROVED_RESPONSE = "00";
+        private const string HONOUR_RESPONSE = "08";
 
         #endregion
 
@@ -52,9 +51,6 @@ namespace Nop.Plugin.Payments.eWay
         /// <returns></returns>
         private string GeteWayUrl()
         {
-            //return useSandBox ? "https://www.eway.com.au/gateway/xmltest/TestPage.asp" :
-            //    "https://www.eway.com.au/gateway/xmlpayment.asp";
-
             return _eWayPaymentSettings.UseSandbox ? "https://www.eway.com.au/gateway_cvn/xmltest/TestPage.asp" :
                 "https://www.eway.com.au/gateway_cvn/xmlpayment.asp";
         }
@@ -73,18 +69,18 @@ namespace Nop.Plugin.Payments.eWay
             var result = new ProcessPaymentResult();
 
             var eWaygateway = new GatewayConnector();
-            var eWayRequest = new GatewayRequest();
-            if (_eWayPaymentSettings.UseSandbox)
-                eWayRequest.EwayCustomerID = _eWayPaymentSettings.TestCustomerId;
-            else
-                eWayRequest.EwayCustomerID = _eWayPaymentSettings.LiveCustomerId;
 
-            eWayRequest.CardNumber = processPaymentRequest.CreditCardNumber;
-            eWayRequest.CardExpiryMonth = processPaymentRequest.CreditCardExpireMonth.ToString("D2");
-            eWayRequest.CardExpiryYear = processPaymentRequest.CreditCardExpireYear.ToString();
-            eWayRequest.CardHolderName = processPaymentRequest.CreditCardName;
+            var eWayRequest = new GatewayRequest
+            {
+                EwayCustomerID = _eWayPaymentSettings.CustomerId,
+                CardNumber = processPaymentRequest.CreditCardNumber,
+                CardExpiryMonth = processPaymentRequest.CreditCardExpireMonth.ToString("D2"),
+                CardExpiryYear = processPaymentRequest.CreditCardExpireYear.ToString(),
+                CardHolderName = processPaymentRequest.CreditCardName,
+                InvoiceAmount = Convert.ToInt32(processPaymentRequest.OrderTotal * 100)
+            };
+
             //Integer
-            eWayRequest.InvoiceAmount = Convert.ToInt32(processPaymentRequest.OrderTotal * 100);
 
             var customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
             var billingAddress = customer.BillingAddress;
@@ -94,7 +90,7 @@ namespace Nop.Plugin.Payments.eWay
             eWayRequest.PurchaserAddress = billingAddress.Address1;
             eWayRequest.PurchaserPostalCode = billingAddress.ZipPostalCode;
             eWayRequest.InvoiceReference = processPaymentRequest.OrderGuid.ToString();
-            eWayRequest.InvoiceDescription = _storeContext.CurrentStore.Name + ". Order #" + processPaymentRequest.OrderGuid.ToString();
+            eWayRequest.InvoiceDescription = _storeContext.CurrentStore.Name + ". Order #" + processPaymentRequest.OrderGuid;
             eWayRequest.TransactionNumber = processPaymentRequest.OrderGuid.ToString();
             eWayRequest.CVN = processPaymentRequest.CreditCardCvv2;
             eWayRequest.EwayOption1 = string.Empty;
@@ -103,7 +99,7 @@ namespace Nop.Plugin.Payments.eWay
 
             // Do the payment, send XML doc containing information gathered
             eWaygateway.Uri = GeteWayUrl();
-            GatewayResponse eWayResponse = eWaygateway.ProcessRequest(eWayRequest);
+            var eWayResponse = eWaygateway.ProcessRequest(eWayRequest);
             if (eWayResponse != null)
             {
                 // Payment succeeded get values returned
@@ -127,7 +123,6 @@ namespace Nop.Plugin.Payments.eWay
                 result.AddError("An invalid response was recieved from the payment gateway.");
                 //full error: eWAYRequest.ToXml().ToString()
             }
-
 
             return result;
         }
@@ -248,7 +243,7 @@ namespace Nop.Plugin.Payments.eWay
         {
             actionName = "Configure";
             controllerName = "PaymenteWay";
-            routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
+            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
         }
 
         /// <summary>
@@ -274,8 +269,7 @@ namespace Nop.Plugin.Payments.eWay
             var settings = new eWayPaymentSettings()
             {
                 UseSandbox = true,
-                TestCustomerId = "",
-                LiveCustomerId= "",
+                CustomerId = "",
                 AdditionalFee = 0,
             };
             _settingService.SaveSetting(settings);
@@ -283,10 +277,8 @@ namespace Nop.Plugin.Payments.eWay
             //locales
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox", "Use sandbox");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint", "Use sandbox?");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.TestCustomerId", "Test customer ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.TestCustomerId.Hint", "Enter test customer ID.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.LiveCustomerId", "Live customer ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.LiveCustomerId.Hint", "Enter live customer ID.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId", "Customer ID");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint", "Enter customer ID.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee", "Additional fee");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
             
@@ -298,10 +290,8 @@ namespace Nop.Plugin.Payments.eWay
             //locales
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox");
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.TestCustomerId");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.TestCustomerId.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.LiveCustomerId");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.LiveCustomerId.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId");
+            this.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee");
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint");
             
