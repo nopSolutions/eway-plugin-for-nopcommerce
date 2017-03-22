@@ -36,7 +36,7 @@ namespace Nop.Plugin.Payments.eWay.Controllers
                 AdditionalFee = _eWayPaymentSettings.AdditionalFee
             };
 
-            return View("~/Plugins/Payments.eWay/Views/PaymenteWay/Configure.cshtml", model);
+            return View("~/Plugins/Payments.eWay/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
@@ -105,7 +105,7 @@ namespace Nop.Plugin.Payments.eWay.Controllers
             if (selectedYear != null)
                 selectedYear.Selected = true;
 
-            return View("~/Plugins/Payments.eWay/Views/PaymenteWay/PaymentInfo.cshtml", model);
+            return View("~/Plugins/Payments.eWay/Views/PaymentInfo.cshtml", model);
         }
 
         [NonAction]

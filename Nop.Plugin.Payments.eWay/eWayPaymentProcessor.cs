@@ -24,6 +24,7 @@ namespace Nop.Plugin.Payments.eWay
         private readonly eWayPaymentSettings _eWayPaymentSettings;
         private readonly ISettingService _settingService;
         private readonly IStoreContext _storeContext;
+        private readonly ILocalizationService _localizationService;
 
         private const string APPROVED_RESPONSE = "00";
         private const string HONOUR_RESPONSE = "08";
@@ -33,12 +34,14 @@ namespace Nop.Plugin.Payments.eWay
         #region Ctor
 
         public eWayPaymentProcessor(ICustomerService customerService, eWayPaymentSettings eWayPaymentSettings,
-            ISettingService settingService, IStoreContext storeContext)
+            ISettingService settingService, IStoreContext storeContext,
+            ILocalizationService localizationService)
         {
             this._customerService = customerService;
             this._eWayPaymentSettings = eWayPaymentSettings;
             this._settingService = settingService;
             this._storeContext = storeContext;
+            this._localizationService = localizationService;
         }
 
         #endregion
@@ -281,6 +284,7 @@ namespace Nop.Plugin.Payments.eWay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint", "Enter customer ID.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee", "Additional fee");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription", "Pay by credit / debit card");
             
             base.Install();
         }
@@ -294,6 +298,7 @@ namespace Nop.Plugin.Payments.eWay
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee");
             this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription");
             
 
             base.Uninstall();
@@ -375,6 +380,14 @@ namespace Nop.Plugin.Payments.eWay
         public bool SkipPaymentInfo
         {
             get { return false; }
+        }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        public string PaymentMethodDescription
+        {
+            get { return _localizationService.GetResource("Plugins.Payments.eWay.PaymentMethodDescription"); }
         }
 
         #endregion
