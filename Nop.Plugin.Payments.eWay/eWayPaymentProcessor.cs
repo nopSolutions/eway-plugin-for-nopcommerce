@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Routing;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Plugins;
 using Nop.Plugin.Payments.eWay.Controllers;
+using Nop.Plugin.Payments.eWay.Models;
+using Nop.Plugin.Payments.eWay.Validators;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -25,6 +29,7 @@ namespace Nop.Plugin.Payments.eWay
         private readonly ISettingService _settingService;
         private readonly IStoreContext _storeContext;
         private readonly ILocalizationService _localizationService;
+        private readonly IWebHelper _webHelper;
 
         private const string APPROVED_RESPONSE = "00";
         private const string HONOUR_RESPONSE = "08";
@@ -35,13 +40,14 @@ namespace Nop.Plugin.Payments.eWay
 
         public eWayPaymentProcessor(ICustomerService customerService, eWayPaymentSettings eWayPaymentSettings,
             ISettingService settingService, IStoreContext storeContext,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService, IWebHelper webHelper)
         {
             this._customerService = customerService;
             this._eWayPaymentSettings = eWayPaymentSettings;
             this._settingService = settingService;
             this._storeContext = storeContext;
             this._localizationService = localizationService;
+            this._webHelper = webHelper;
         }
 
         #endregion
@@ -116,14 +122,14 @@ namespace Nop.Plugin.Payments.eWay
                 }
                 else
                 {
-                    result.AddError("An invalid response was recieved from the payment gateway." + eWayResponse.Error);
+                    result.AddError($"An invalid response was received from the payment gateway. Response: " + eWayResponse.Error);
                     //full error: eWAYRequest.ToXml().ToString()
                 }
             }
             else
             {
                 // invalid response recieved from server.
-                result.AddError("An invalid response was recieved from the payment gateway.");
+                result.AddError("An invalid response was received from the payment gateway.");
                 //full error: eWAYRequest.ToXml().ToString()
             }
 
@@ -236,18 +242,65 @@ namespace Nop.Plugin.Payments.eWay
             return false;
         }
 
+        public IList<string> ValidatePaymentForm(IFormCollection form)
+        {
+            var warnings = new List<string>();
+
+            //validate
+            var validator = new PaymentInfoValidator(_localizationService);
+            var model = new PaymentInfoModel()
+            {
+                CardholderName = form["CardholderName"],
+                CardNumber = form["CardNumber"],
+                CardCode = form["CardCode"],
+            };
+            var validationResult = validator.Validate(model);
+            if (validationResult.IsValid) return warnings;
+
+            warnings.AddRange(validationResult.Errors.Select(error => error.ErrorMessage));
+            return warnings;
+
+        }
+
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
+        {
+            var paymentInfo = new ProcessPaymentRequest
+            {
+                CreditCardType = form["CreditCardType"],
+                CreditCardName = form["CardholderName"],
+                CreditCardNumber = form["CardNumber"],
+                CreditCardExpireMonth = int.Parse(form["ExpireMonth"]),
+                CreditCardExpireYear = int.Parse(form["ExpireYear"]),
+                CreditCardCvv2 = form["CardCode"]
+            };
+            return paymentInfo;
+        }
+
+        /// <summary>
+        /// Gets a configuration page URL
+        /// </summary>
+        public override string GetConfigurationPageUrl()
+        {
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymenteWay/Configure";
+        }
+
+        public void GetPublicViewComponent(out string viewComponentName)
+        {
+            viewComponentName = "PaymenteWay";
+        }
+
         /// <summary>
         /// Gets a route for provider configuration
         /// </summary>
         /// <param name="actionName">Action name</param>
         /// <param name="controllerName">Controller name</param>
         /// <param name="routeValues">Route values</param>
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
-        {
-            actionName = "Configure";
-            controllerName = "PaymenteWay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
-        }
+        //public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        //{
+        //    actionName = "Configure";
+        //    controllerName = "PaymenteWay";
+        //    routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
+        //}
 
         /// <summary>
         /// Gets a route for payment info
@@ -255,12 +308,12 @@ namespace Nop.Plugin.Payments.eWay
         /// <param name="actionName">Action name</param>
         /// <param name="controllerName">Controller name</param>
         /// <param name="routeValues">Route values</param>
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
-        {
-            actionName = "PaymentInfo";
-            controllerName = "PaymenteWay";
-            routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
-        }
+        //public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        //{
+        //    actionName = "PaymentInfo";
+        //    controllerName = "PaymenteWay";
+        //    routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
+        //}
 
         public Type GetControllerType()
         {
