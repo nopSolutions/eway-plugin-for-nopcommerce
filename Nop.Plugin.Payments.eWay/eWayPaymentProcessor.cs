@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Routing;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Plugins;
-using Nop.Plugin.Payments.eWay.Controllers;
+using Nop.Plugin.Payments.eWay.Models;
+using Nop.Plugin.Payments.eWay.Validators;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -20,28 +22,33 @@ namespace Nop.Plugin.Payments.eWay
     {
         #region Fields
 
+        private const string APPROVED_RESPONSE = "00";
+        private const string HONOUR_RESPONSE = "08";
+
         private readonly ICustomerService _customerService;
         private readonly eWayPaymentSettings _eWayPaymentSettings;
         private readonly ISettingService _settingService;
         private readonly IStoreContext _storeContext;
         private readonly ILocalizationService _localizationService;
-
-        private const string APPROVED_RESPONSE = "00";
-        private const string HONOUR_RESPONSE = "08";
+        private readonly IWebHelper _webHelper;
 
         #endregion
 
         #region Ctor
 
-        public eWayPaymentProcessor(ICustomerService customerService, eWayPaymentSettings eWayPaymentSettings,
-            ISettingService settingService, IStoreContext storeContext,
-            ILocalizationService localizationService)
+        public eWayPaymentProcessor(ICustomerService customerService, 
+            eWayPaymentSettings eWayPaymentSettings,
+            ISettingService settingService, 
+            IStoreContext storeContext,
+            ILocalizationService localizationService, 
+            IWebHelper webHelper)
         {
             this._customerService = customerService;
             this._eWayPaymentSettings = eWayPaymentSettings;
             this._settingService = settingService;
             this._storeContext = storeContext;
             this._localizationService = localizationService;
+            this._webHelper = webHelper;
         }
 
         #endregion
@@ -230,49 +237,73 @@ namespace Nop.Plugin.Payments.eWay
         public bool CanRePostProcessPayment(Order order)
         {
             if (order == null)
-                throw new ArgumentNullException("order");
+                throw new ArgumentNullException(nameof(order));
             
             //it's not a redirection payment method. So we always return false
             return false;
         }
 
         /// <summary>
-        /// Gets a route for provider configuration
+        /// Gets a configuration page URL
         /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public override string GetConfigurationPageUrl()
         {
-            actionName = "Configure";
-            controllerName = "PaymenteWay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymenteWay/Configure";
         }
 
         /// <summary>
-        /// Gets a route for payment info
+        /// Validate payment form
         /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        /// <param name="form">The parsed form values</param>
+        /// <returns>List of validating errors</returns>
+        public IList<string> ValidatePaymentForm(IFormCollection form)
         {
-            actionName = "PaymentInfo";
-            controllerName = "PaymenteWay";
-            routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.eWay.Controllers" }, { "area", null } };
+            var warnings = new List<string>();
+
+            //validate
+            var validator = new PaymentInfoValidator(_localizationService);
+            var model = new PaymentInfoModel()
+            {
+                CardholderName = form["CardholderName"],
+                CardNumber = form["CardNumber"],
+                CardCode = form["CardCode"],
+            };
+            var validationResult = validator.Validate(model);
+            if (validationResult.IsValid) return warnings;
+
+            warnings.AddRange(validationResult.Errors.Select(error => error.ErrorMessage));
+            return warnings;
         }
 
-        public Type GetControllerType()
+        /// <summary>
+        /// Get payment information
+        /// </summary>
+        /// <param name="form">The parsed form values</param>
+        /// <returns>Payment info holder</returns>
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
         {
-            return typeof(PaymenteWayController);
+            var paymentInfo = new ProcessPaymentRequest
+            {
+                CreditCardType = form["CreditCardType"],
+                CreditCardName = form["CardholderName"],
+                CreditCardNumber = form["CardNumber"],
+                CreditCardExpireMonth = int.Parse(form["ExpireMonth"]),
+                CreditCardExpireYear = int.Parse(form["ExpireYear"]),
+                CreditCardCvv2 = form["CardCode"]
+            };
+
+            return paymentInfo;
         }
 
+        /// <summary>
+        /// Install plugin
+        /// </summary>
         public override void Install()
         {
             var settings = new eWayPaymentSettings()
             {
                 UseSandbox = true,
-                CustomerId = "",
+                CustomerId = string.Empty,
                 AdditionalFee = 0,
             };
             _settingService.SaveSetting(settings);
@@ -289,6 +320,9 @@ namespace Nop.Plugin.Payments.eWay
             base.Install();
         }
         
+        /// <summary>
+        /// Uninstall plugin
+        /// </summary>
         public override void Uninstall()
         {
             //locales
@@ -302,6 +336,15 @@ namespace Nop.Plugin.Payments.eWay
             
 
             base.Uninstall();
+        }
+
+        /// <summary>
+        /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
+        /// </summary>
+        /// <param name="viewComponentName">View component name</param>
+        public void GetPublicViewComponent(out string viewComponentName)
+        {
+            viewComponentName = "PaymenteWay";
         }
 
         #endregion

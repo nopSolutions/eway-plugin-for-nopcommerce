@@ -282,28 +282,28 @@ namespace Nop.Plugin.Payments.eWay
         {
             // We don't really need the overhead of creating an XML DOM object
             // to really just concatenate a string together.
-            string _xml = "<ewaygateway>";
-            _xml += CreateNode("ewayCustomerID", XmlHelper.XmlEncode(_txCustomerID));
-            _xml += CreateNode("ewayTotalAmount", XmlHelper.XmlEncode(_txAmount.ToString()));
-            _xml += CreateNode("ewayCardHoldersName", XmlHelper.XmlEncode(_txCardholderName));
-            _xml += CreateNode("ewayCardNumber", XmlHelper.XmlEncode(_txCardNumber));
-            _xml += CreateNode("ewayCardExpiryMonth", XmlHelper.XmlEncode(_txCardExpiryMonth));
-            _xml += CreateNode("ewayCardExpiryYear", XmlHelper.XmlEncode(_txCardExpiryYear));
-            _xml += CreateNode("ewayTrxnNumber", XmlHelper.XmlEncode(_txTransactionNumber));
-            _xml += CreateNode("ewayCustomerInvoiceDescription", XmlHelper.XmlEncode(_txInvoiceDescription));
-            _xml += CreateNode("ewayCustomerFirstName", XmlHelper.XmlEncode(_txCardholderFirstName));
-            _xml += CreateNode("ewayCustomerLastName", XmlHelper.XmlEncode(_txCardholderLastName));
-            _xml += CreateNode("ewayCustomerEmail", XmlHelper.XmlEncode(_txCardholderEmailAddress));
-            _xml += CreateNode("ewayCustomerAddress", XmlHelper.XmlEncode(_txCardholderAddress));
-            _xml += CreateNode("ewayCustomerPostcode", XmlHelper.XmlEncode(_txCardholderPostalCode));
-            _xml += CreateNode("ewayCustomerInvoiceRef", XmlHelper.XmlEncode(_txInvoiceReference));
-            _xml += CreateNode("ewayCVN", XmlHelper.XmlEncode(_txCVN));
-            _xml += CreateNode("ewayOption1", XmlHelper.XmlEncode(_txOption1));
-            _xml += CreateNode("ewayOption2", XmlHelper.XmlEncode(_txOption2));
-            _xml += CreateNode("ewayOption3", XmlHelper.XmlEncode(_txOption3));
-            _xml += "</ewaygateway>";
+            var xml = "<ewaygateway>";
+            xml += CreateNode("ewayCustomerID", XmlHelper.XmlEncode(_txCustomerID));
+            xml += CreateNode("ewayTotalAmount", XmlHelper.XmlEncode(_txAmount.ToString()));
+            xml += CreateNode("ewayCardHoldersName", XmlHelper.XmlEncode(_txCardholderName));
+            xml += CreateNode("ewayCardNumber", XmlHelper.XmlEncode(_txCardNumber));
+            xml += CreateNode("ewayCardExpiryMonth", XmlHelper.XmlEncode(_txCardExpiryMonth));
+            xml += CreateNode("ewayCardExpiryYear", XmlHelper.XmlEncode(_txCardExpiryYear));
+            xml += CreateNode("ewayTrxnNumber", XmlHelper.XmlEncode(_txTransactionNumber));
+            xml += CreateNode("ewayCustomerInvoiceDescription", XmlHelper.XmlEncode(_txInvoiceDescription));
+            xml += CreateNode("ewayCustomerFirstName", XmlHelper.XmlEncode(_txCardholderFirstName));
+            xml += CreateNode("ewayCustomerLastName", XmlHelper.XmlEncode(_txCardholderLastName));
+            xml += CreateNode("ewayCustomerEmail", XmlHelper.XmlEncode(_txCardholderEmailAddress));
+            xml += CreateNode("ewayCustomerAddress", XmlHelper.XmlEncode(_txCardholderAddress));
+            xml += CreateNode("ewayCustomerPostcode", XmlHelper.XmlEncode(_txCardholderPostalCode));
+            xml += CreateNode("ewayCustomerInvoiceRef", XmlHelper.XmlEncode(_txInvoiceReference));
+            xml += CreateNode("ewayCVN", XmlHelper.XmlEncode(_txCVN));
+            xml += CreateNode("ewayOption1", XmlHelper.XmlEncode(_txOption1));
+            xml += CreateNode("ewayOption2", XmlHelper.XmlEncode(_txOption2));
+            xml += CreateNode("ewayOption3", XmlHelper.XmlEncode(_txOption3));
+            xml += "</ewaygateway>";
 
-            return _xml;
+            return xml;
         }
 
         /// <summary>
@@ -312,7 +312,7 @@ namespace Nop.Plugin.Payments.eWay
         /// <param name="nodeName">The name of the node being created.</param>
         /// <param name="nodeValue">The value of the node being created.</param>
         /// <returns>An XML node as a string.</returns>
-        private string CreateNode(string nodeName, string nodeValue)
+        private static string CreateNode(string nodeName, string nodeValue)
         {
             return "<" + nodeName + ">" + nodeValue + "</" + nodeName + ">";
         }

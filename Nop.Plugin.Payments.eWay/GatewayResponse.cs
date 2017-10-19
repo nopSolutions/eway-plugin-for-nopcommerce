@@ -17,63 +17,63 @@ namespace Nop.Plugin.Payments.eWay
         /// <param name="xml">Xml string</param>
         public GatewayResponse(string xml)
         {
-            var _sr = new StringReader(xml);
-            var _xtr = new XmlTextReader(_sr)
+            var sr = new StringReader(xml);
+            var xtr = new XmlTextReader(sr)
             {
                 XmlResolver = null,
                 WhitespaceHandling = WhitespaceHandling.None
             };
 
             // get the root node
-            _xtr.Read();
+            xtr.Read();
 
-            if ((_xtr.NodeType != XmlNodeType.Element) || (_xtr.Name != "ewayResponse")) return;
+            if (xtr.NodeType != XmlNodeType.Element || xtr.Name != "ewayResponse") return;
 
-            while (_xtr.Read())
+            while (xtr.Read())
             {
-                if ((_xtr.NodeType != XmlNodeType.Element) || _xtr.IsEmptyElement) continue;
+                if (xtr.NodeType != XmlNodeType.Element || xtr.IsEmptyElement) continue;
 
-                var _currentField = _xtr.Name;
-                _xtr.Read();
-                if (_xtr.NodeType != XmlNodeType.Text) continue;
+                var currentField = xtr.Name;
+                xtr.Read();
+                if (xtr.NodeType != XmlNodeType.Text) continue;
 
-                switch (_currentField)
+                switch (currentField)
                 {
                     case "ewayTrxnError":
-                        Error = _xtr.Value;
+                        Error = xtr.Value;
                         break;
 
                     case "ewayTrxnStatus":
-                        if (_xtr.Value.ToLower().IndexOf("true") != -1)
+                        if (xtr.Value.ToLower().IndexOf("true") != -1)
                             Status = true;
                         break;
 
                     case "ewayTrxnNumber":
-                        TransactionNumber = _xtr.Value;
+                        TransactionNumber = xtr.Value;
                         break;
 
                     case "ewayTrxnOption1":
-                        Option1 = _xtr.Value;
+                        Option1 = xtr.Value;
                         break;
 
                     case "ewayTrxnOption2":
-                        Option2 = _xtr.Value;
+                        Option2 = xtr.Value;
                         break;
 
                     case "ewayTrxnOption3":
-                        Option3 = _xtr.Value;
+                        Option3 = xtr.Value;
                         break;
 
                     case "ewayReturnAmount":
-                        Amount = int.Parse(_xtr.Value);
+                        Amount = int.Parse(xtr.Value);
                         break;
 
                     case "ewayAuthCode":
-                        AuthorisationCode = _xtr.Value;
+                        AuthorisationCode = xtr.Value;
                         break;
 
                     case "ewayTrxnReference":
-                        InvoiceReference = _xtr.Value;
+                        InvoiceReference = xtr.Value;
                         break;
 
                     default:
@@ -86,46 +86,46 @@ namespace Nop.Plugin.Payments.eWay
         /// <summary>
         /// Gets a transaction number
         /// </summary>
-        public string TransactionNumber { get; private set; }
+        public string TransactionNumber { get; }
 
         /// <summary>
         /// Gets an invoice reference
         /// </summary>
-        public string InvoiceReference { get; private set; }
+        public string InvoiceReference { get; }
 
         /// <summary>
         /// Gets an option 1
         /// </summary>
-        public string Option1 { get; private set; }
+        public string Option1 { get; }
 
         /// <summary>
         /// Gets an option 2
         /// </summary>
-        public string Option2 { get; private set; }
+        public string Option2 { get; }
 
         /// <summary>
         /// Gets an option 3
         /// </summary>
-        public string Option3 { get; private set; }
+        public string Option3 { get; }
 
         /// <summary>
         /// Gets an authorisatio code
         /// </summary>
-        public string AuthorisationCode { get; private set; }
+        public string AuthorisationCode { get; }
 
         /// <summary>
         /// Gets an error 
         /// </summary>
-        public string Error { get; private set; }
+        public string Error { get; }
 
         /// <summary>
         /// Gets an amount
         /// </summary>
-        public int Amount { get; private set; }
+        public int Amount { get; }
 
         /// <summary>
         /// Gets a status
         /// </summary>
-        public bool Status { get; private set; }
+        public bool Status { get; }
     }
 }
