@@ -309,13 +309,13 @@ namespace Nop.Plugin.Payments.eWay
             _settingService.SaveSetting(settings);
 
             //locales
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox", "Use sandbox");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint", "Use sandbox?");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId", "Customer ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint", "Enter customer ID.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee", "Additional fee");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription", "Pay by credit / debit card");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox", "Use sandbox");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint", "Use sandbox?");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId", "Customer ID");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint", "Enter customer ID.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee", "Additional fee");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription", "Pay by credit / debit card");
             
             base.Install();
         }
@@ -326,15 +326,14 @@ namespace Nop.Plugin.Payments.eWay
         public override void Uninstall()
         {
             //locales
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.UseSandbox.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.CustomerId.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.AdditionalFee.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.eWay.PaymentMethodDescription");
             
-
             base.Uninstall();
         }
 
@@ -342,9 +341,9 @@ namespace Nop.Plugin.Payments.eWay
         /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
         /// </summary>
         /// <param name="viewComponentName">View component name</param>
-        public void GetPublicViewComponent(out string viewComponentName)
+        public string GetPublicViewComponentName()
         {
-            viewComponentName = "PaymenteWay";
+            return "PaymenteWay";
         }
 
         #endregion
